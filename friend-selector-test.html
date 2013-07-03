@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<head>
+    <title></title>
+    <link type="text/css" href="css/bootstrap.css" rel="stylesheet" />
+    <link type="text/css" href="css/fb-buttons.css" rel="stylesheet" />
+    <!-- Add jQuery library -->
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+    <!-- Add Facebook Friend Selector CSS -->
+    <link type="text/css" href="/friend-selector/jquery.friend.selector.css" rel="stylesheet" />
+    <!-- Add Facebook Friend Selector JS -->
+    <script type="text/javascript" src="/friend-selector/jquery.friend.selector-1.2.js"></script>
+
+    <style type="text/css">
+
+        .fb-logout{
+            cursor:pointer;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="fb-root"></div>
+    <script type="text/javascript">
+    var fb_token;
+
+    function showLoggedInButtons(){
+        console.log('in');
+        $('.fb-friend-select').removeClass('disabled');
+        $('.fb-login').hide();
+        $('.fb-logout-group').show();
+    }
+
+    function showLoggedOutButtons(){
+        console.log('out');
+        $('.fb-friend-select').addClass('disabled');
+        $('.fb-login').show();
+        $('.fb-logout-group').hide();
+    }
+
+    function login() {
+        FB.login(function(response) {
+            if (response.authResponse) {
+                // connected
+                showLoggedInButtons();
+                fb_token =   FB.getAuthResponse()['accessToken'];
+            } else {
+                // cancelled
+            }
+        });
+    }
+
+    function logout(){
+        FB.logout(function(response) {
+            // user is now logged out
+            showLoggedOutButtons();
+        });
+    }
+
+    window.fbAsyncInit = function() {
+    // init the FB JS SDK
+        FB.init({
+            appId      : '108428925994348', // App ID from the App Dashboard
+            channelUrl : '//phandom.co/channel.html', // Channel File for x-domain communication
+            status     : true, // check the login status upon init?
+            cookie     : true, // set sessions cookies to allow your server to access the session?
+            xfbml      : true  // parse XFBML tags on this page?
+        });
+    // Additional initialization code such as adding Event Listeners goes here
+        FB.getLoginStatus(function(response) {
+            fbStatus = response.status;
+            if (response.status === 'connected') {
+                // connected
+                showLoggedInButtons();
+                fb_token =   FB.getAuthResponse()['accessToken'];
+            } else if (response.status === 'not_authorized') {
+                // not_authorized
+                showLoggedOutButtons();
+            } else {
+                // not_logged_in
+                showLoggedOutButtons();
+            }
+        });
+
+        $('.fb-logout').click(function(){
+            logout();
+        });
+
+        $('.fb-login').click(function(){
+            login();
+        });
+
+        $(".fb-add").fSelector({
+            onSubmit: function(response){
+                // example response usage
+                var selected_friends = [];
+                $.each(response, function(k, v){
+                    selected_friends[k] = v;
+                });
+                alert(selected_friends);
+            }
+        });
+    };
+
+    (function(d, debug){
+        var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement('script'); js.id = id; js.async = true;
+        js.src = "http://connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
+        ref.parentNode.insertBefore(js, ref);
+        }(document, /*debug*/ false)
+    );
+    </script>
+    <span class="fb-buttons">
+        <button class='fb-login uibutton confirm'>Login to Add Friends</button>
+        <button class='fb-add uibutton icon add'>Add Friends</button>
+        <span class="fb-logout-group">
+            <img src="img/fb.png">
+            <span> Logged in | </span>
+            <a class="fb-logout">Log Out</a>
+        </span>
+    </span>
+    
+</body>
+</html>
