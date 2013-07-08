@@ -162,9 +162,8 @@
 
     $('#fs-user-list').append('<div id="fs-loading"></div>');
 
+    FB.api("/me/friends", function(response){
 
-
-    function fSelectorCallback(response){
       if ( response.error ){
         alert(fsOptions.lang.fbConnectError);
         _close();
@@ -207,15 +206,7 @@
 
       $('#fs-loading').remove();
 
-    };
-
-    if (fb_friends && !fb_friends.error) {
-      fSelectorCallback(fb_friends);
-    } else {
-      FB.api("/me/friends", function(response){
-        fSelectorCallback(response);
-      });
-    }
+    });
 
   },
 
@@ -408,7 +399,8 @@
         wrapWidth = wrap.width(),
         wrapHeight = wrap.height(),
         wrapLeft = (windowWidth / 2) - (wrapWidth / 2),
-        wrapTop = $('#generatorContainer').offset().top - 30;
+        wrapTop = (windowHeight / 2) - (wrapHeight / 2);
+
     if ( is_started === true ) {
       overlay
         .css({
@@ -584,6 +576,7 @@
 
 
   $.fn.fSelector = function ( options ) {
+
     this.unbind("click.fs");
     this.bind("click.fs", function(){
       fsOptions = options;

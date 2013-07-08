@@ -3,9 +3,7 @@
         var basePath = pathname.split('?')[0];
 
         if (pathname.split('?').length > 1){
-
             var fromFB = pathname.split('?')[1].match('fb_action_ids');
-            console.log(fromFB,pathname);
             if (fromFB) {
                 window.location.href = 'http://www.phandom.co';    
             };
@@ -14,14 +12,15 @@
         var preview_headline, preview_images;
         var headline_object = {};
         var bitlyUrl, next_headline_object;
-        var fb_token,fb_friends;
+        var fb_token;
 
         // Configure the 'google' object from jsapi to do  'search' with API version '1'
         google.load('search','1',{'nocss':true});
 
         // We need a variable that can store a list of Google Searches
-        var searchObject = [];
+        var primarySearchObject = [];
 
+        // Checking if outmoded by new customLink
         function customHeadlineParse(){
             
             preview_headline = $('#custom-headline').val().capAll();
@@ -34,12 +33,13 @@
         }
 
         function customLink(){
-            preview_images = '';
-            preview_headline = '';
-            $('.tab-content .active .custom-image').each(function(){
-                preview_images += preview_images === '' ? $(this).val() : ',' + $(this).val();
-            });
+
             preview_headline = $('.custom-headline').val().capAll();
+            preview_images = '';
+            $('.custom-image').each(function(){
+                console.log(this.value);
+                preview_images += preview_images == '' && this.value != '' ? this.value : ',' + this.value;
+            });
 
             var h = preview_headline ? escape(preview_headline.replace(/\s/g,"+")) : '';
             var i = preview_images ? escape(preview_images.replace(/\s/g,"+")) : '';
@@ -48,9 +48,9 @@
 
             var new_link = basePath+"?"+"h="+h+"&i="+i+"&t="+t;
             if (h != '' && i != ''){
-                window.location.href = new_link;    
+                //window.location.href = new_link;    
             }
-            
+            console.log(new_link);
         }
 
         function getShareUrl(){
@@ -81,41 +81,64 @@
             );
         }
 
-        function twitterPrepend(id){
-            var username = '@' + $(id).find('.custom-image-source').val();
-            $(id).find('.custom-image').val(username);
+        // FB functions
+
+        function showLoggedInButtons(){
+            console.log('in');
+            $('.fb-friend-select').removeClass('disabled');
+            $('.fb-login').hide();
+            $('.fb-logout-group').show();
         }
 
-//        function fbAddImage(id){
-//            var fb_base = 'https://graph.facebook.com/';
-//            var picture_type = 'picture?type=large';
-//            var fb_src = fb_base + id + picture_type;
-//            console.log(fb_src);
-//        }
+        function showLoggedOutButtons(){
+            console.log('out');
+            $('.fb-friend-select').addClass('disabled');
+            $('.fb-login').show();
+            $('.fb-logout-group').hide();
+        }
 
+        function fbLogin() {
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    // connected
+                    showLoggedInButtons();
+                    fb_token = FB.getAuthResponse()['accessToken'];
+                } else {
+                    // cancelled
+                }
+            });
+        }
+
+        function fbLogout(){
+            FB.logout(function(response) {
+                // user is now logged out
+                showLoggedOutButtons();
+            });
+        }
             
         $(document).ready(function(){
 
-            $('#myTab a').click(function (e) {
-              e.preventDefault();
-              $(this).tab('show');
-            })
-
             $('.fb-share-box').click(function(){
-                var zx = encodeURIComponent;
-                var base = 'https://www.facebook.com/sharer/sharer.php?s=100';
-                var shareUrl =  '&p%5Burl%5D='+ zx(getShareUrl());
-                var image =  '&p%5Bimages%5D%5B0%5D=' + zx($('.imgContainer img').attr('src'));
-                var title = '&p%5Btitle%5D=' + zx(document.title);
-                var summary = '&p%5Bsummary%5D=' + zx('Make some shocking headlines of your own at www.phandom.co.');
-                var link = base + shareUrl + image + title + summary;
+                var img_source = $('.imgContainer img').attr('src');
+                var caption = headline_object.celebs_in_headline.toString() + "- Secrets, Secrets!";
+                var shareUrl = getShareUrl();
+                // calling the API ...
+                var obj = {
+                  method: 'feed',
+                  display:'dialog',
+                  redirect_uri: shareUrl,
+                  link: shareUrl,
+                  picture: img_source,
+                  name: document.title,
+                  caption: caption,
+                  description: 'Make some shocking headlines of your own at www.phandom.co.'
+                };
 
-                var w = 640; 
-                var h = 460; 
-                var sTop = window.screen.height/2-(h/2); 
-                var sLeft = window.screen.width/2-(w/2); 
-                window.open(link, "Share", "status=1,height="+h+",width="+w+",top="+sTop+",left="+sLeft+",resizable=0"); 
+                function callback(response) {
+                  
+                }
 
+                FB.ui(obj, callback);
             });
 
             $('.tshare').click(function(){                
@@ -171,7 +194,7 @@
                 if (params){
                     params = JSON.parse('{"' + unescape(params.replace(/&/g, "\",\"").replace(/=/g,"\":\"")).replace(/\+/g,' ') + '"}');
                     params.i = params.i.split(',');
-                    params.t = params.t ? params.t.split(',') : undefined;
+                    params.t = params.t ? params.t.split(',') : '';
                     headline_object.headline = params.h;
                     headline_object.celebs_in_headline = params.i;
                     headline_object.celebs_twitter = params.t;
@@ -182,7 +205,7 @@
             }
 
             // Create a random link
-            function getNextParams(){
+            function makeParams(){
                 var h = escape(next_headline_object.headline.replace(/\s/g,'+'));
                 var i = escape(next_headline_object.celebs_in_headline);
                 var t = escape(next_headline_object.celebs_twitter);
@@ -198,11 +221,11 @@
             var pictures_loaded = 0;
 
             // If the searchImage function completes, set all pictures to 400px height, then resize to fit
-            function addImage(number){
+            function addImage(number, searchObject){
                 
                 if (searchObject[number].results && searchObject[number].results.length > 0) {
                     var results = searchObject[number].results;
-                    var result = results.getRandom();
+                    var result = results[0];
                     var newImg = $('<img>');
                     newImg.attr({'src':result.unescapedUrl})
                         .addClass('celebImg')
@@ -238,31 +261,23 @@
                             };
                         })
                         .error(function(){
-                            searchImages([celebs_in_headline[number]]);
+                            searchImages([celebs_in_headline[number]],primarySearchObject);
                         });
                 }
             }
 
             // Find medium size pics of each celeb's face
-            function searchImages(query){
+            function searchImages(query, searchObject){
                 
                 for (var i = 0; i < query.length; i++) {
-                    var facebook_id = isNaN(parseInt(query[i])) ? null : parseInt(query[i]);
                     var twitter_handle = query[i].match(/@[A-Za-z0-9_]{1,15}/g);
-                    if (facebook_id !== null){
-                        var base = 'https://graph.facebook.com/';
-                        var picture_type = '/picture?type=large';
-                        var access_token = fb_token ? fb_token : '';
-                        var link = base + facebook_id + picture_type + access_token;
-                        searchObject[i] = {results:[{unescapedUrl:link}]};
-                        addImage(i);                        
-                    } else if (twitter_handle !== null) {
+                    if (twitter_handle !== null) {
                         var handle = twitter_handle[0].replace('@','');
                         var base = 'http://api.twitter.com/1/users/profile_image?screen_name=';
                         var size = '&size=original';
                         var link = base + handle + size;
                         searchObject[i] = {results:[{unescapedUrl:link}]};
-                        addImage(i);
+                        addImage(i, searchObject);
                     } else {
                         searchObject[i] = new google.search.ImageSearch();
                         searchObject[i].setRestriction(
@@ -274,7 +289,7 @@
                         // searchObject[i].setRestriction(
                         //     google.search.ImageSearch.RESTRICT_IMAGETYPE,
                         //     google.search.ImageSearch.IMAGETYPE_FACES);
-                        searchObject[i].setSearchCompleteCallback(this, addImage, [i]);
+                        searchObject[i].setSearchCompleteCallback(this, addImage, [i, searchObject]);
                         searchObject[i].execute(query[i]);                        
                     }
                 };
@@ -304,17 +319,9 @@
             $('.headline').css({'font-size':fontsize});
             document.getElementsByClassName('headline')[0].innerHTML = headline;
             document.title = headline;
-            searchImages(celebs_in_headline);
+            searchImages(celebs_in_headline,primarySearchObject);
 
             getBitlyUrl();
-
-            $('<fb:comments>')
-                .attr({
-                    'href': getShareUrl(),
-                    'width':'770',
-                    'num_posts':10
-                })
-                .appendTo('.fb-comments');
 
         });
 

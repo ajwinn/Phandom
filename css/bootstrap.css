@@ -30,6 +30,10 @@
           color:rgba(241,35,141,1);
         }
 
+        .fb_ltr{
+          z-index: 99999 !important;
+        }
+
         .contentContainer{
             width:770px;
             height:400px;

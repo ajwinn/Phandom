@@ -1,124 +1,106 @@
-<!DOCTYPE html>
+<html>
 <head>
-    <title></title>
-    <link type="text/css" href="css/bootstrap.css" rel="stylesheet" />
-    <link type="text/css" href="css/fb-buttons.css" rel="stylesheet" />
-    <!-- Add jQuery library -->
-    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
-    <!-- Add Facebook Friend Selector CSS -->
-    <link type="text/css" href="/friend-selector/jquery.friend.selector.css" rel="stylesheet" />
-    <!-- Add Facebook Friend Selector JS -->
-    <script type="text/javascript" src="/friend-selector/jquery.friend.selector-1.2.js"></script>
-
-    <style type="text/css">
-
-        .fb-logout{
-            cursor:pointer;
-        }
-
-    </style>
-</head>
-<body>
-    <div id="fb-root"></div>
+    <title>Friend Selector Test</title>
+    <link rel="stylesheet" type="text/css" href="css/tdfriendselector.css">
+    <script type="text/javascript" src="js/tdfriendselector.js"></script>
     <script type="text/javascript">
-    var fb_token;
 
-    function showLoggedInButtons(){
-        console.log('in');
-        $('.fb-friend-select').removeClass('disabled');
-        $('.fb-login').hide();
-        $('.fb-logout-group').show();
+    function showSelector(){
+// Additional init code here
+        FB.getLoginStatus(function(response) {
+            console.log(response);
+            if (response.status === 'connected') {
+                // User logged into FB and authorized
+                phandomSelector.showFriendSelector();
+                document.getElementById('fb-logout').style.display = 'block';
+            } else if (response.status === 'not_authorized') {
+                // User logged into FB but not authorized
+                login();
+            } else {
+                // User not logged into FB
+                login();
+            }
+        });
     }
 
-    function showLoggedOutButtons(){
-        console.log('out');
-        $('.fb-friend-select').addClass('disabled');
-        $('.fb-login').show();
-        $('.fb-logout-group').hide();
-    }
-
-    function login() {
+    function login(){
         FB.login(function(response) {
             if (response.authResponse) {
                 // connected
-                showLoggedInButtons();
-                fb_token =   FB.getAuthResponse()['accessToken'];
+                document.getElementById('fb-logout').style.display = 'block';
             } else {
                 // cancelled
             }
         });
     }
+    TDFriendSelector.init({debug: true});
+    phandomSelector = TDFriendSelector.newInstance({
+        callbackSubmit: function(selectedFriendIds) {
+            console.log("The following friends were selected: " + selectedFriendIds.join(", "));
+        }
+    });
 
-    function logout(){
-        FB.logout(function(response) {
-            // user is now logged out
-            showLoggedOutButtons();
-        });
-    }
-
-    window.fbAsyncInit = function() {
-    // init the FB JS SDK
-        FB.init({
-            appId      : '108428925994348', // App ID from the App Dashboard
-            channelUrl : '//phandom.co/channel.html', // Channel File for x-domain communication
-            status     : true, // check the login status upon init?
-            cookie     : true, // set sessions cookies to allow your server to access the session?
-            xfbml      : true  // parse XFBML tags on this page?
-        });
-    // Additional initialization code such as adding Event Listeners goes here
-        FB.getLoginStatus(function(response) {
-            fbStatus = response.status;
-            if (response.status === 'connected') {
-                // connected
-                showLoggedInButtons();
-                fb_token =   FB.getAuthResponse()['accessToken'];
-            } else if (response.status === 'not_authorized') {
-                // not_authorized
-                showLoggedOutButtons();
-            } else {
-                // not_logged_in
-                showLoggedOutButtons();
-            }
-        });
-
-        $('.fb-logout').click(function(){
-            logout();
-        });
-
-        $('.fb-login').click(function(){
-            login();
-        });
-
-        $(".fb-add").fSelector({
-            onSubmit: function(response){
-                // example response usage
-                var selected_friends = [];
-                $.each(response, function(k, v){
-                    selected_friends[k] = v;
-                });
-                alert(selected_friends);
-            }
-        });
-    };
-
-    (function(d, debug){
-        var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
-        if (d.getElementById(id)) {return;}
-        js = d.createElement('script'); js.id = id; js.async = true;
-        js.src = "http://connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
-        ref.parentNode.insertBefore(js, ref);
-        }(document, /*debug*/ false)
-    );
     </script>
-    <span class="fb-buttons">
-        <button class='fb-login uibutton confirm'>Login to Add Friends</button>
-        <button class='fb-add uibutton icon add'>Add Friends</button>
-        <span class="fb-logout-group">
-            <img src="img/fb.png">
-            <span> Logged in | </span>
-            <a class="fb-logout">Log Out</a>
-        </span>
-    </span>
-    
+
+</head>
+<body>
+    <div id="fb-root"></div>
+    <script>
+      // Additional JS functions here
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId      : '108428925994348', // App ID
+          channelUrl : '//phandom.co/channel.html', // Channel File
+          status     : true, // check login status
+          cookie     : true, // enable cookies to allow the server to access the session
+          xfbml      : true  // parse XFBML
+        });
+
+        // Additional init code here
+
+      };
+
+      // Load the SDK Asynchronously
+      (function(d){
+         var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement('script'); js.id = id; js.async = true;
+         js.src = "//connect.facebook.net/en_US/all.js";
+         ref.parentNode.insertBefore(js, ref);
+       }(document));
+    </script>
+    <button onclick="showSelector()">Select Friends</button>
+    <button id="fb-login" onclick="getFbStatus()" style="display:none">Login</button>
+    <button id="fb-logout" href="#" style="display:none" onclick="logout()">Logout</button>
+
+
+<!-- Markup for These Days Friend Selector -->
+        <div id="TDFriendSelector">
+            <div class="TDFriendSelector_dialog">
+                <a href="#" id="TDFriendSelector_buttonClose">x</a>
+                <div class="TDFriendSelector_form">
+                    <div class="TDFriendSelector_header">
+                        <p>Select your friends</p>
+                    </div>
+                    <div class="TDFriendSelector_content">
+                        <p>Then you can add their profile pic to the headline.</p>
+                        <div class="TDFriendSelector_searchContainer TDFriendSelector_clearfix">
+                            <div class="TDFriendSelector_selectedCountContainer"><span class="TDFriendSelector_selectedCount">0</span> / <span class="TDFriendSelector_selectedCountMax">0</span> friends selected</div>
+                            <input type="text" placeholder="Search friends" id="TDFriendSelector_searchField" />
+                        </div>
+                        <div class="TDFriendSelector_friendsContainer"></div>
+                    </div>
+                    <div class="TDFriendSelector_footer TDFriendSelector_clearfix">
+                        <a href="#" id="TDFriendSelector_pagePrev" class="TDFriendSelector_disabled">Previous</a>
+                        <a href="#" id="TDFriendSelector_pageNext">Next</a>
+                        <div class="TDFriendSelector_pageNumberContainer">
+                            Page <span id="TDFriendSelector_pageNumber">1</span> / <span id="TDFriendSelector_pageNumberTotal">1</span>
+                        </div>
+                        <a href="#" id="TDFriendSelector_buttonOK">OK</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 </body>
 </html>

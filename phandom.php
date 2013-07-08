@@ -1,3 +1,24 @@
+<?php
+$params = $_SERVER["REQUEST_URI"];
+$parsableParam = $params;
+
+if ($params){
+    
+    $parsableParam = preg_replace(/&/, '\",\"',$parsableParam);
+    $parsableParam = preg_replace(/=/, '\":\"',$parsableParam);
+    $parsableParam = rawurldecode($parasableParam);
+    $parsableParam = preg_replace(/\+/, " ",$parsableParam);
+    $parseString = '{"' . $parasableParam . '"}';
+
+    $headline_object = json_decode($parseString);
+    $urls = ($headline_object['u'] ? explode(',',$headline_object['u'] : 'empty');
+
+    if ($headline_object['u'] != 'empty') {
+        $img_url = $headline_object['u'][0];
+    }
+}
+
+?>
 
 <!DOCTYPE html>
 <head>
@@ -23,11 +44,14 @@
     <!-- JS: Google, jQuery, Phandom -->
     <script src="js/jsapi.js"></script>
     <script src="js/jquery.min.js"></script>
-    <script src="js/phandom.js"></script>
+    <script src="js/phandom-urlfix.js"></script>
 
     <!-- CSS & JS: FB Friend Selector-->
     <link type="text/css" href="friend-selector/jquery.friend.selector.css" rel="stylesheet" />
     <script type="text/javascript" src="friend-selector/jquery.friend.selector-1.2.js"></script>
+
+    <!-- Canonical -->
+    <link rel="canonical" href="http://phandom.co<?php echo $params; ?>"/>
 
     <!-- CSS: FB Button & Custom Bootstap-->
     <link type="text/css" href="css/fb-buttons.css" rel="stylesheet" />
@@ -38,7 +62,7 @@
     <meta property="fb:app_id" content="108428925994348" />
     <meta property="og:title" content="Phandom" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="http://phandom.co" />
+    <meta property="og:url" content="http://phandom.co<?php echo $params; ?>" />
     <meta property="og:image" content="https://twimg0-a.akamaihd.net/profile_images/3371376883/4bf54ef19f02f6366b45bb454d0806de_bigger.png" />
     <meta property="og:site_name" content="Phandom" />
     <meta property="fb:admins" content="20706217" />
@@ -99,6 +123,12 @@
         $checked.appendTo(selected);
     }
     var $fb_tab;
+
+//    function twitterPrepend(id){
+//        var handle = '@'+$(id).find('.custom-image-source').val();
+//        $(id).find('.custom-image').val(handle)
+//
+//    }
 
     window.fbAsyncInit = function() {
     // init the FB JS SDK
@@ -191,29 +221,15 @@
                                     <img src="img/shuffle2.png" style=" margin-left: -11px; margin-bottom: -8px; vertical-align:default">
                                 </a>
                                 -->
-                                <div class="oswald fontlight" style="color:#595959;margin-left:7px;margin-bottom:10px;">NEWS YOU CANT TRUST &#153;</div> 
+                                <div class="oswald fontlight" style="color:#595959;margin-left:7px;">NEWS YOU CANT TRUST &#153;</div> 
+                                <div style="margin-left:7px;margin-bottom:20px">
+                                    <div class="pink lobster" style="display:inline-block">Click Like!</div>
+                                    <div class="fb-like" data-href="http://www.phandom.co" data-send="false" data-layout="button_count" data-width="300" data-show-faces="false" style="display:inline-block"></div>
+                                </div>
+                                
                             </div>
                             <div class="span4">
-                                <div style="float:right;margin-top:4px">
-                                    <span id="today" class="oswald fontlight" style="vertical-align: middle;color: rgb(131, 131, 131);font-size: 18px;float: right;">blah</span>
-                                    <script type="text/javascript">
-                                        var mydate=new Date();
-                                        var year=mydate.getYear();
-                                        if (year < 1000);
-                                        year+=1900;
-                                        var day=mydate.getDay();
-                                        var month=mydate.getMonth();
-                                        var daym=mydate.getDate();
-                                        if (daym<10){daym="0"+daym}
-                                        var dayarray=new Array("SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY");
-                                        var montharray=new Array("JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER");
-                                        var full = dayarray[day]+" "+montharray[month]+" "+daym+", "+year;
-                                        document.getElementById('today').innerHTML=full;
-                                    </script>
-                                </div>
-                                <div style="float:right; margin-top:10px;text-align:right;">
-                                    <a href="#" id="next-text" class="oswald next"  style="font-size:22px;text-decoration:none;"></a>
-                                </div>
+
                             </div>
                         </div>
                         <div class="row">
@@ -239,6 +255,7 @@
                                         <div class="headline next"></div>
                                     </div>
                                 </span>
+                        <div class="fb-comments" href="http://phandom.co<?php echo $params; ?>" data-width="770" data-num-posts="10"></div>
                                 
                                 <div class="well customHeadlineForm" style="min-width:730px">
 <form>
@@ -258,15 +275,18 @@
                     <div class="oswald fontlight">  CHOOSE FIRST PICTURE</div>
                 </p>
                 <ul class="nav nav-tabs">
-                  <li class="active"><a href="#google1" data-toggle="tab">Celebrity</a></li>
+                  <li class="active"><a href="#google1" data-toggle="tab">Google Search</a></li>
                   <li class=""><a href="#facebook1" data-toggle="tab">Facebook</a></li>
                   <li class=""><a href="#twitter1" data-toggle="tab">Twitter</a></li>
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane fade active in" id="google1">
-                            <p>Start typing any famous person's name.</p>
-                            <input class="span3 celeb-typeahead custom-image" type="text" placeholder="e.g. Beyonce" data-provide="typeahead">
-                            <p><em><strong>Hint:</strong> It will work with anyone famous enough for Google Image Search to find.</em></p>
+                        <div class="input-append">
+                            <input id="google-search-1-input" class="span2" type="text" placeholder="e.g. Beyonce" data-provide="typeahead">
+                            <button id="google-search-1" class="btn" type="button">Search</button>
+                        </div>                        
+                        <div id="google-search-1-results"></div>
+                        <input class='custom-image'>
                     </div>
                     <div class="tab-pane fade" id="facebook1">
                         <p>
@@ -304,15 +324,18 @@
                     <div class="oswald fontlight">  CHOOSE SECOND PICTURE</div>
                 </p>
                 <ul class="nav nav-tabs">
-                  <li class="active"><a href="#google2" data-toggle="tab">Celebrity</a></li>
+                  <li class="active"><a href="#google2" data-toggle="tab">Google Search</a></li>
                   <li class=""><a href="#facebook2" data-toggle="tab">Facebook</a></li>
                   <li class=""><a href="#twitter2" data-toggle="tab">Twitter</a></li>
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane fade active in" id="google2">
-                            <p>Start typing any famous person's name.</p>
-                            <input class="span3 celeb-typeahead custom-image" type="text" placeholder="e.g. Beyonce" data-provide="typeahead">
-                            <p><em><strong>Hint:</strong> It will work with anyone famous enough for Google Image Search to find.</em></p>
+                        <div class="input-append">
+                            <input id="google-search-2-input" class="span2" type="text" placeholder="e.g. Beyonce" data-provide="typeahead">
+                            <button id="google-search-2" class="btn" type="button">Search</button>
+                        </div>
+                        <div id="google-search-2-results"></div>
+                        <input class='custom-image'>
                     </div>
                     <div class="tab-pane fade" id="facebook2">
                         <p>
@@ -354,10 +377,14 @@
         </div>
     </div>
 </div>
+        <p style="text-align: center; margin-top: 20px;">Click to see a preview of your headline.</p>
+        <p>
+            <div class="generator custom-link lobster">
+            <span>Preview</span>
+            </div>
+        </p>
+        
 
-        <p></p><div class="generator custom-link lobster">
-            <span>Generate</span>
-        </div>
     <!--
     <label class="checkbox">
       <input type="checkbox"> Randomize Names
@@ -365,16 +392,35 @@
     -->                                
   </fieldset>
 </form> 
-                                </div>
-                            <div class="fb-comments">
-                            </div>
-                            </div>
+                    </div>
+
+                    </div>
                         </div>
                     </div>
                     <div class="span4">
-                        <div class="pink lobster">Tell Us We're Awesome</div>
-                        <div class="fb-like" data-href="http://www.phandom.co" data-send="false" data-width="300" data-show-faces="true"></div>
+
+                        <div style="margin-top:4px;">
+
+                            <div id="today" class="oswald fontlight" style="display:inline-block;color: rgb(131, 131, 131);font-size: 18px;float:right;">blah</div>
+                            <script type="text/javascript">
+                                var mydate=new Date();
+                                var year=mydate.getYear();
+                                if (year < 1000);
+                                year+=1900;
+                                var day=mydate.getDay();
+                                var month=mydate.getMonth();
+                                var daym=mydate.getDate();
+                                if (daym<10){daym="0"+daym}
+                                var dayarray=new Array("SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY");
+                                var montharray=new Array("JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER");
+                                var full = dayarray[day]+" "+montharray[month]+" "+daym+", "+year;
+                                document.getElementById('today').innerHTML=full;
+                            </script>
+                        </div>
                         
+                        <div class="next-headlines" style="margin-top:30px">
+
+                        </div>
                         
                         <div class="well" style="padding-left:36px;padding-bottom:5px;min-width:299px">
                             <script type="text/javascript"><!--
@@ -415,6 +461,9 @@
 <script type="text/javascript">
 
     var _gaq = _gaq || [];
+    var pluginUrl = 
+     '//www.google-analytics.com/plugins/ga/inpage_linkid.js';
+    _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
     _gaq.push(['_setAccount', 'UA-39152713-1']);
     _gaq.push(['_setDomainName', 'phandom.co']);
     _gaq.push(['_trackPageview']);
